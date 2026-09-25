@@ -1,0 +1,70 @@
+name: weekly-gram-mirror
+
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-gram-mirror
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_URL: https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram
+  UPSTREAM_LICENSE: https://raw.githubusercontent.com/amzxyz/RIME-LMDG/main/LICENSE
+  ASSET: wanxiang-lts-zh-hans.gram
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch upstream gram
+        run: |
+          curl -fL --retry 5 --retry-delay 10 -o "$ASSET" "$UPSTREAM_URL"
+          sha256sum "$ASSET" | cut -d' ' -f1 > new.sha256
+          stat -c%s "$ASSET" > new.size
+
+      - name: Check for change
+        id: cmp
+        run: |
+          old=$(jq -r '.sha256 // empty' gram.json)
+          new=$(cat new.sha256)
+          echo "new_sha=$new" >> "$GITHUB_OUTPUT"
+          if [ -n "$old" ] && [ "$old" = "$new" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "upstream unchanged ($new), nothing to mirror"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Old releases are never deleted: each upstream change becomes a fresh
+      # immutable tag, keeping every previously pinned URL resolvable.
+      - name: Publish snapshot
+        if: steps.cmp.outputs.changed == 'true'
+        run: |
+          tag="lts-$(date -u +%Y%m%d)-$(cut -c1-8 new.sha256)"
+          curl -fL --retry 3 -o LICENSE.upstream "$UPSTREAM_LICENSE"
+          [ -s LICENSE.upstream ] && mv LICENSE.upstream LICENSE
+          jq -n --arg tag "$tag" \
+                --arg url "$UPSTREAM_URL" \
+                --arg sha "$(cat new.sha256)" \
+                --arg size "$(cat new.size)" \
+                --arg date "$(date -u +%F)" \
+                '{tag:$tag, url:$url, sha256:$sha, size:($size|tonumber), date:$date}' > gram.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gram.json LICENSE
+          git commit -m "mirror $tag"
+          git push
+          git tag "$tag"
+          git push origin "$tag"
+          gh release create "$tag" "$ASSET" \
+            --title "$tag" \
+            --notes "Unmodified mirror of wanxiang-lts-zh-hans.gram from amzxyz/RIME-LMDG (CC BY 4.0, see NOTICE)."
+        env:
+          GH_TOKEN: ${{ github.token }}

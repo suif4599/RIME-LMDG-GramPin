@@ -1,0 +1,8 @@
+This repository mirrors the Wanxiang LTS Rime grammar model
+(wanxiang-lts-zh-hans.gram) from amzxyz/RIME-LMDG, redistributed unmodified.
+
+Copyright (c) amzxyz and RIME-LMDG contributors.
+Licensed under CC BY 4.0 — see LICENSE or https://creativecommons.org/licenses/by/4.0/
+
+Upstream project: https://github.com/amzxyz/RIME-LMDG
+Upstream model release: https://github.com/amzxyz/RIME-LMDG/releases (LTS channel)
