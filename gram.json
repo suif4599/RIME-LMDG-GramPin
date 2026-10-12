@@ -1,7 +1,7 @@
 {
-  "tag": "lts-20261005-e3f958d2",
+  "tag": "lts-20261012-d26da3d6",
   "url": "https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram",
-  "sha256": "e3f958d2557a2c027543e874c802dcce9022b9b6fe1673d97c0bd1ef30592264",
-  "size": 404661292,
-  "date": "2026-10-05"
+  "sha256": "d26da3d6fe567bcf4aad8790475356997d8bc0886b087b292c5063c0adc12bd0",
+  "size": 398357548,
+  "date": "2026-10-12"
 }
